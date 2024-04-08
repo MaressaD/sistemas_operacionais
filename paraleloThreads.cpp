@@ -15,28 +15,26 @@ struct ThreadData {
     vector<vector<float>>& matrizC;
     int linhaInicio;
     int linhaFim;
+    size_t index; // Alterado de int para size_t
 };
 
 vector<vector<float>> lerMatrizDoArquivo(const string& nomeArquivo) {
     ifstream arquivo(nomeArquivo);
     vector<vector<float>> matriz;
 
-    if(arquivo.is_open()){
+    if (arquivo.is_open()) {
         int linhas, colunas;
-        arquivo>>linhas>>colunas;
+        arquivo >> linhas >> colunas;
         matriz.resize(linhas, vector<float>(colunas));
-        // arquivo.ignore(); para ignorar o espaço gerado pela quebra de linha
         arquivo.ignore();
-        for(int i = 0; i < linhas; ++i){
-            for(int j = 0; j < colunas; ++j){
+        for (int i = 0; i < linhas; ++i) {
+            for (int j = 0; j < colunas; ++j) {
                 string linha;
-                arquivo.ignore();
-                //condicional para quando chegar ao fim do arquivo
-                if(!getline(arquivo, linha))
+                if (!getline(arquivo, linha))
                     break;
                 istringstream iss(linha);
                 string token;
-                iss >> token; 
+                iss >> token; // Ignorando o primeiro token (rótulo)
                 iss >> matriz[i][j];
             }
         }
@@ -48,15 +46,35 @@ vector<vector<float>> lerMatrizDoArquivo(const string& nomeArquivo) {
     return matriz;
 }
 
-void geraArquivoResultado(long long tempoExecucao,string name) {
-    ofstream arquivo(name+".txt");
+void geraArquivoResultado(long long tempoExecucao, size_t index) { // Alterado de int para size_t
+    ofstream arquivo("thread_" + to_string(index) + ".txt");
     if (arquivo.is_open()) {
-         arquivo<<tempoExecucao;
+        arquivo << tempoExecucao;
         arquivo.close();
-        cout<<"Arquivo "<<name<<".txt gerado com sucesso"<<endl;
-    }else{
-        cout<<"Ocorrou um erro ao gerar o arquivo "<<name<<".txt"<<endl;
+        cout << "Arquivo thread_" << index << ".txt gerado com sucesso" << endl;
+    } else {
+        cout << "Ocorreu um erro ao gerar o arquivo thread_" << index << ".txt" << endl;
     }
+}
+
+void calcularProdutoParcial(const ThreadData& data) {
+    auto inicio = steady_clock::now();
+
+    int linhasA = data.matrizA.size();
+    int colunasB = data.matrizB[0].size();
+
+    for (int i = data.linhaInicio; i < data.linhaFim; ++i) {
+        for (int j = 0; j < colunasB; ++j) {
+            for (int k = 0; k < data.matrizA[0].size(); ++k) {
+                data.matrizC[i][j] += data.matrizA[i][k] * data.matrizB[k][j];
+            }
+        }
+    }
+
+    auto fim = steady_clock::now();
+    auto tempoExecucao = duration_cast<milliseconds>(fim - inicio);
+
+    geraArquivoResultado(tempoExecucao.count(), data.index);
 }
 void produtoMatricialParcial(const vector<vector<float>>& matrizA, const vector<vector<float>>& matrizB,int indexInicio,int indexFim, vector<vector<float>>& matrizC) {
     int linhasA=matrizA.size();
@@ -87,41 +105,26 @@ void imprimirMatriz(const vector<vector<float>>& matriz) {
         cout << endl;
     }
 }
-void calcularProdutoParcial(const ThreadData& data) {
-    vector<vector<float>>matriz(3,vector<float>(3, 0.0));
-    for (int i = data.linhaInicio; i < data.linhaFim; ++i) {
-        for (int j = 0; j < data.matrizB[0].size(); ++j) {
-            for (int k = 0; k < data.matrizA[0].size(); ++k) {
-                data.matrizC[i][j] += data.matrizA[i][k] * data.matrizB[k][j];
-                matriz[i][j] += data.matrizA[i][k] * data.matrizB[k][j];
-            }
-        }
-    }
-}
-void criaThreads(const vector<vector<float>>& matrizA, const vector<vector<float>>& matrizB,int P){
-    vector<thread> threads;//vetor para armazenar as threads
-    int linhasA=matrizA.size();
-    int colunasB=matrizB[0].size();
-    int elementosPorThreads=ceil((double)(linhasA*colunasB)/P);
-    vector<vector<float>>matrizC(linhasA,vector<float>(colunasB, 0.0));
-   
-    //começa cronometragem
-    auto inicio = steady_clock::now();
+void criaThreads(const vector<vector<float>>& matrizA, const vector<vector<float>>& matrizB, int P) {
+    vector<thread> threads;
 
+    vector<vector<float>> matrizC(matrizA.size(), vector<float>(matrizB[0].size(), 0.0));
+
+    int linhasA = matrizA.size();
     int linhasPorThread = linhasA / P;
     int linhaInicio = 0;
 
-    // criação e execução das threads
     for (int i = 0; i < P - 1; ++i) {
         int linhaFim = linhaInicio + linhasPorThread;
-        threads.emplace_back(calcularProdutoParcial,ThreadData{matrizA, matrizB, matrizC, linhaInicio, linhaFim});
+        threads.emplace_back(calcularProdutoParcial, ThreadData{matrizA, matrizB, matrizC, linhaInicio, linhaFim, static_cast<size_t>(i)});
         linhaInicio = linhaFim;
     }
-    threads.emplace_back(calcularProdutoParcial, ThreadData{matrizA, matrizB, matrizC, linhaInicio, linhasA});
+    threads.emplace_back(calcularProdutoParcial, ThreadData{matrizA, matrizB, matrizC, linhaInicio, linhasA, static_cast<size_t>(P - 1)});
 
-    for(auto& t : threads){
+    for (auto& t : threads) {
         t.join();
     }
+
     imprimirMatriz(matrizC);
     auto fim = steady_clock::now();
     auto tempoExecucao = duration_cast<milliseconds>(fim - inicio);
@@ -131,23 +134,28 @@ void criaThreads(const vector<vector<float>>& matrizA, const vector<vector<float
     }
     return;
 }
-int main() {
-    // Ler as matrizes dos arquivos
-    string nomeArq1,nomeArq2;
+
+
+int main(int argc, char *argv[]) {
+
     int P;
     // cout<<"Digite o nome dos arquivos para leitura das matrizes:"<<endl;
     // cin>>nomeArq1>>nomeArq2;
+
+    // Ler as matrizes dos arquivos
     cout<<"Digite o número de threads P:"<<endl;
     cin>>P;
-    // vector<vector<float>> matrizA = lerMatrizDoArquivo(nomeArq1+".txt");
-    // vector<vector<float>> matrizB = lerMatrizDoArquivo(nomeArq2+".txt");
-    vector<vector<float>> matrizA = lerMatrizDoArquivo("matriza.txt");
-    vector<vector<float>> matrizB = lerMatrizDoArquivo("matrizb.txt");
-    
+
+    string nomeArq1 = "matriza.txt";
+    string nomeArq2 = "matrizb.txt";
+
+    vector<vector<float>> matrizA = lerMatrizDoArquivo(nomeArq1);
+    vector<vector<float>> matrizB = lerMatrizDoArquivo(nomeArq2);
+
     int linhas = matrizA.size();
-    int colunas = matrizB[0].size(); 
-  
-    criaThreads(matrizA,matrizB,P);
+    int colunas = matrizB[0].size();
+    
+    criaThreads(matrizA, matrizB, P);
+
     return 0;
-  
 }
