@@ -4,8 +4,10 @@
 #include <cmath>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 // Função para ler uma matriz de um arquivo
 vector<vector<float>> lerMatrizDoArquivo(const string& nomeArquivo) {
@@ -23,8 +25,7 @@ vector<vector<float>> lerMatrizDoArquivo(const string& nomeArquivo) {
 }
 
 // Função para calcular a multiplicação de uma parte da matriz
-void calcularParteMatriz(const vector<vector<float>>& matrizA, const vector<vector<float>>& matrizB,
-                         int linhaInicio, int linhaFim, const string& nomeArquivoResultado) {
+void calcularParteMatriz(const vector<vector<float>>& matrizA, const vector<vector<float>>& matrizB, int linhaInicio, int linhaFim) {
     int linhasA = matrizA.size();
     int colunasB = matrizB[0].size();
     vector<vector<float>> resultado(linhaFim - linhaInicio + 1, vector<float>(colunasB, 0));
@@ -35,17 +36,26 @@ void calcularParteMatriz(const vector<vector<float>>& matrizA, const vector<vect
             }
         }
     }
-    ofstream arquivoResultado(nomeArquivoResultado);
-    arquivoResultado << resultado.size() << " " << resultado[0].size() << endl;
-    for (int i = 0; i < resultado.size(); ++i) {
-        for (int j = 0; j < resultado[i].size(); ++j) {
-            arquivoResultado << resultado[i][j] << " ";
-        }
-        arquivoResultado << endl;
-    }
-    arquivoResultado.close();
+    // ofstream arquivoResultado(nomeArquivoResultado);
+    // arquivoResultado << resultado.size() << " " << resultado[0].size() << endl;
+    // for (int i = 0; i < resultado.size(); ++i) {
+    //     for (int j = 0; j < resultado[i].size(); ++j) {
+    //         arquivoResultado << resultado[i][j] << " ";
+    //     }
+    //     arquivoResultado << endl;
+    // }
+    //arquivoResultado.close();
 }
-
+void geraArquivoResultado(const string& nomeArquivoResultado,long long tempoExecucao) { // Alterado de int para size_t
+    ofstream arquivo(nomeArquivoResultado);
+    if (arquivo.is_open()) {
+        arquivo << tempoExecucao;
+        arquivo.close();
+        cout << "Arquivo " << nomeArquivoResultado <<  " gerado com sucesso" << endl;
+    } else {
+        cout << "Ocorreu um erro ao gerar o arquivo " << nomeArquivoResultado << endl;
+    }
+}
 int main(int argc, char *argv[]) {
     if (argc < 4) {
         cerr << "Uso: " << argv[0] << " <arquivo_matriz_A> <arquivo_matriz_B> <numero_processos>" << endl;
@@ -76,10 +86,15 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < numeroProcessos; ++i) {
         int pid = fork();
         if (pid == 0) { // Processo filho
+            auto inicio = steady_clock::now();
             linhaInicio = linhaFim + 1;
             linhaFim = min(linhaInicio + elementosPorProcesso - 1, linhasA - 1);
-            string nomeArquivoResultado = "resultado_" + to_string(i) + ".txt";
-            calcularParteMatriz(matrizA, matrizB, linhaInicio, linhaFim, nomeArquivoResultado);
+            string nomeArquivoResultado = "processo" + to_string(i) + ".txt";
+            calcularParteMatriz(matrizA, matrizB, linhaInicio, linhaFim);
+            auto fim = steady_clock::now();
+            auto tempoExecucao = duration_cast<milliseconds>(fim - inicio);
+            geraArquivoResultado(nomeArquivoResultado,tempoExecucao.count());
+            cout<<tempoExecucao.count()<<endl;
             return 0;
         } else if (pid < 0) { // Erro ao criar o processo
             cerr << "Erro ao criar o processo." << endl;
