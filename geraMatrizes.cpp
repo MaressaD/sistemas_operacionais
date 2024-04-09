@@ -35,7 +35,7 @@ void geraArquivoMatriz(vector<vector<float>>& matriz, string name,string tagLine
 }
 int main() {
     int n1,m1,n2,m2;
-    cout<<"Digite as dimensões das duas matrizers, sendo n1 m1 n2 e m2 respectivamente\n"<<endl;
+    cout<<"Digite as dimensões das duas matrizes, sendo n1 m1 n2 e m2 respectivamente\n"<<endl;
     cin>>n1>>m1>>n2>>m2;
     
     vector<vector<float>> matrizA(m1, vector<float>(m2));
