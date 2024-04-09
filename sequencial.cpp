@@ -62,6 +62,8 @@ void geraArquivoMatriz(vector<vector<float>>& matriz, string name,string tagLine
             }
             arquivo<<endl; 
         }
+        arquivo<<tempoExecucao;
+        arquivo<<endl; 
         arquivo.close();
         cout<<"Arquivo "<<name<<".txt gerado com sucesso"<<endl;
     }else{
@@ -93,12 +95,12 @@ vector<vector<float>> produtoMatricial(const vector<vector<float>>& matrizA, con
 int main() {
     // Ler as matrizes dos arquivos
     string nomeArq1,nomeArq2;
-    //cout<<"Digite o nome dos arquivos para leitura das matrizes\n"<<endl;
-    //cin>>nomeArq1>>nomeArq2;
-    //vector<vector<float>> matrizA = lerMatrizDoArquivo(nomeArq1+".txt");
-    //vector<vector<float>> matrizB = lerMatrizDoArquivo(nomeArq2+".txt");
-    vector<vector<float>> matrizA = lerMatrizDoArquivo("matriza.txt");
-    vector<vector<float>> matrizB = lerMatrizDoArquivo("matrizb.txt");
+    cout<<"Digite o nome dos arquivos para leitura das matrizes\n"<<endl;
+    cin>>nomeArq1>>nomeArq2;
+    vector<vector<float>> matrizA = lerMatrizDoArquivo(nomeArq1+".txt");
+    vector<vector<float>> matrizB = lerMatrizDoArquivo(nomeArq2+".txt");
+    // vector<vector<float>> matrizA = lerMatrizDoArquivo("matriza.txt");
+    // vector<vector<float>> matrizB = lerMatrizDoArquivo("matrizb.txt");
     
     int linhas = matrizA.size();
     int colunas = matrizB[0].size(); 
