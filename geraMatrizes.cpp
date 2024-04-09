@@ -35,22 +35,14 @@ void geraArquivoMatriz(vector<vector<float>>& matriz, string name,string tagLine
 }
 int main() {
     int n1,m1,n2,m2;
-    int n;
     cout<<"Digite as dimensões das duas matrizers, sendo n1 m1 n2 e m2 respectivamente\n"<<endl;
-    //cin>>n1>>m1>>n2>>m2;
-    cin>>n;
+    cin>>n1>>m1>>n2>>m2;
     
-    // vector<vector<float>> matrizA(m1, vector<float>(m2));
-    // vector<vector<float>> matrizB(n1, vector<float>(n2));
+    vector<vector<float>> matrizA(m1, vector<float>(m2));
+    vector<vector<float>> matrizB(n1, vector<float>(n2));
 
-    // preencherMatrizAleatoriamente(matrizA, m1, m2);
-    // preencherMatrizAleatoriamente(matrizB, n1, n2);
-
-    vector<vector<float>> matrizA(n, vector<float>(n));
-    vector<vector<float>> matrizB(n, vector<float>(n));
-
-    preencherMatrizAleatoriamente(matrizA, n, n);
-    preencherMatrizAleatoriamente(matrizB, n, n);
+    preencherMatrizAleatoriamente(matrizA, m1, m2);
+    preencherMatrizAleatoriamente(matrizB, n1, n2);
 
     geraArquivoMatriz(matrizA,"matriza","a");
     geraArquivoMatriz(matrizB, "matrizb","b");

@@ -99,8 +99,6 @@ int main() {
     cin>>nomeArq1>>nomeArq2;
     vector<vector<float>> matrizA = lerMatrizDoArquivo(nomeArq1+".txt");
     vector<vector<float>> matrizB = lerMatrizDoArquivo(nomeArq2+".txt");
-    // vector<vector<float>> matrizA = lerMatrizDoArquivo("matriza.txt");
-    // vector<vector<float>> matrizB = lerMatrizDoArquivo("matrizb.txt");
     
     int linhas = matrizA.size();
     int colunas = matrizB[0].size(); 
